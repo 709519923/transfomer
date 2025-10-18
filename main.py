@@ -206,3 +206,4 @@ if __name__ == "__main__":
         print(f"源序列: {src_clean}")
         print(f"预测结果: {pred_clean} (预期: {src_clean[::-1]})")
         print("---")
+        print("pycharm")
