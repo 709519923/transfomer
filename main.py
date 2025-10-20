@@ -27,7 +27,7 @@ class Config:
     dropout = 0.1  # Dropout比例
 
     # 训练参数
-    batch_size = 8
+    batch_size = 9
     epochs = 50
     lr = 1e-3
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -113,21 +113,26 @@ def train_epoch(model, dataloader, criterion, optimizer, config):
 
     for src_seq, tgt_seq in dataloader:
         # 数据移至设备
-        src_seq = src_seq.to(config.device).transpose(0, 1)  # [seq_len, batch_size]
-        tgt_seq = tgt_seq.to(config.device).transpose(0, 1)  # [seq_len, batch_size]
+        # src_seq = src_seq.to(config.device).transpose(0, 1)  # [seq_len, batch_size]  [10, 8]
+        # tgt_seq = tgt_seq.to(config.device).transpose(0, 1)  # [seq_len, batch_size]  [9,  8]
+        src_seq = src_seq.to(config.device)  # [seq_len, batch_size]  [10, 8]
+        tgt_seq = tgt_seq.to(config.device) # [seq_len, batch_size]  [9,  8]
 
         # 构造输入和标签（解码器输入不含最后一个EOS，标签不含第一个SOS）
-        tgt_input = tgt_seq[:-1, :]  # 解码器输入：[seq_len-1, batch_size]
-        tgt_label = tgt_seq[1:, :]  # 标签：[seq_len-1, batch_size]
-
+        # tgt_input = tgt_seq[:-1, :]  # 解码器输入：[seq_len-1, batch_size]
+        # tgt_label = tgt_seq[1:, :]  # 标签：[seq_len-1, batch_size]
+        tgt_input = tgt_seq[:, :-1]  # 解码器输入：[batch_size, seq_len-1]
+        tgt_label = tgt_seq[:, 1:]  # 标签：[batch_size, seq_len-1]
         # 生成掩码
         src_mask = create_pad_mask(src_seq, config.pad_idx).to(config.device)  # 编码器掩码
 
         tgt_pad_mask = create_pad_mask(tgt_input, config.pad_idx).to(config.device)
-        tgt_subsequent_mask = create_subsequent_mask(tgt_input.size(0), config.device)
+        # tgt_subsequent_mask = create_subsequent_mask(tgt_input.size(0), config.device)
+        tgt_subsequent_mask = create_subsequent_mask(tgt_input.size(1), config.device)
         tgt_self_mask = combine_masks(tgt_pad_mask, tgt_subsequent_mask)  # 解码器自注意力掩码
         tgt_cross_mask = src_mask  # 解码器-编码器交叉注意力掩码（与编码器掩码相同）
 
+        # src_mask  => [8.1.1.10]
         # 前向传播
         optimizer.zero_grad()
         output = model(src_seq, tgt_input, src_mask, tgt_self_mask, tgt_cross_mask)
@@ -150,14 +155,16 @@ def train_epoch(model, dataloader, criterion, optimizer, config):
 # ------------------------------
 def predict(model, src_seq, config):
     model.eval()
-    src_seq = src_seq.unsqueeze(1).to(config.device)  # [seq_len, 1]（单样本）
+    # src_seq = src_seq.unsqueeze(1).to(config.device)  # [seq_len, 1]（单样本）
+    src_seq = src_seq.unsqueeze(0).to(config.device)  # [1, seq_len]（单样本）
 
     # 生成编码器掩码
     src_mask = create_pad_mask(src_seq, config.pad_idx).to(config.device)
     enc_output = model.encoder(src_seq, src_mask)
 
     # 初始化解码器输入（仅含SOS）
-    tgt_seq = torch.tensor([[config.sos_idx]], dtype=torch.long, device=config.device).transpose(0, 1)  # [1, 1]
+    # tgt_seq = torch.tensor([[config.sos_idx]], dtype=torch.long, device=config.device).transpose(0, 1)  # [1, 1]
+    tgt_seq = torch.tensor([[config.sos_idx]], dtype=torch.long, device=config.device) # [1, 1] batch-first
 
     for _ in range(config.max_seq_len - 1):
         # 生成解码器掩码
@@ -167,11 +174,11 @@ def predict(model, src_seq, config):
 
         # 解码器前向传播
         dec_output = model.decoder(tgt_seq, enc_output, tgt_self_mask, src_mask)
-        output = model.output_layer(dec_output[-1:, :, :])  # 取最后一个时间步
+        output = model.output_layer(dec_output[:, -1:, :])  # 取最后一个时间步
         pred_token = torch.argmax(output, dim=-1)  # 贪婪选择
 
         # 拼接结果
-        tgt_seq = torch.cat([tgt_seq, pred_token], dim=0)
+        tgt_seq = torch.cat([tgt_seq, pred_token], dim=1)
 
         # 若预测到EOS，停止解码
         if pred_token.item() == config.eos_idx:
@@ -206,4 +213,5 @@ if __name__ == "__main__":
         print(f"源序列: {src_clean}")
         print(f"预测结果: {pred_clean} (预期: {src_clean[::-1]})")
         print("---")
-        print("pycharm")
+
+
