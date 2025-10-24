@@ -29,11 +29,13 @@ class PositionalEncoding(nn.Module):
         div_term = torch.exp(torch.arange(0, d_model, 2) * (-math.log(10000.0) / d_model))
 
         # 创建一个 (max_len, d_model) 的零矩阵来存放位置编码
-        pe = torch.zeros(max_len, 1, d_model)
+        # pe = torch.zeros(max_len, 1, d_model)
+        # 改 适配[b, l, d]
+        pe = torch.zeros(1, max_len,  d_model)  #
 
         # 使用广播机制和正弦/余弦函数计算位置编码
-        pe[:, 0, 0::2] = torch.sin(position * div_term)  # 偶数维度
-        pe[:, 0, 1::2] = torch.cos(position * div_term)  # 奇数维度
+        pe[0, :, 0::2] = torch.sin(position * div_term)  # 偶数维度
+        pe[0, :, 1::2] = torch.cos(position * div_term)  # 奇数维度
 
         # 将pe注册为模型的缓冲区（buffer）。
         # buffer是模型状态的一部分，会被保存和加载，但不会被视为模型参数进行训练。
@@ -53,8 +55,9 @@ class PositionalEncoding(nn.Module):
             torch.Tensor: 添加了位置编码的嵌入向量. shape: [seq_len, batch_size, d_model]
         """
         # 将位置编码pe加到输入的词元嵌入x上
-        # self.pe是 [max_len, 1, d_model]，我们只取当前序列长度的部分
-        x = x + self.pe[:x.size(0)]
+        # self.pe是 [1, max_len, d_model]，我们只取当前序列长度的部分
+        # x = x + self.pe[:x.size(0)]
+        x = x + self.pe[:,:x.size(1),:]
         return self.dropout(x)
 
 class TransformerEmbedding(nn.Module):

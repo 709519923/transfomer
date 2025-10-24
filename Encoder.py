@@ -13,7 +13,7 @@ class Encoder(nn.Module):
         ])
 
     def forward(self, x, mask):
-        x = self.embedding(x)  # 词嵌入 + 位置编码
+        x = self.embedding(x)  # 词嵌入 + 位置编码 [batch, seq] -> [batch, seq, d_model]
         for layer in self.layers:
             x = layer(x, mask)  # 经过N个编码器层
         return x  # 编码器输出，作为解码器的K和V

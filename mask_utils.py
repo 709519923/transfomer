@@ -13,13 +13,18 @@ def create_pad_mask(seq: torch.Tensor, pad_idx: int) -> torch.Tensor:
         mask: 掩码张量，形状 [batch_size, 1, 1, seq_len]（便于注意力计算时广播）
               填充位置为0，有效位置为1
     """
+    batch_size, seq_len = seq.transpose(0, 1).size()  # 提取 batch_size 和 seq_len
+    batch_size, seq_len = seq.size()  # 提取 batch_size 和 seq_len
     # 检查输入维度，适应不同格式
+    # 这里有误，不需要再转置-DC
     if seq.dim() == 2:
         # 若输入为 [seq_len, batch_size]，转置为 [batch_size, seq_len]
-        seq = seq.transpose(0, 1)
+        seq = seq
+        # seq = seq.transpose(0, 1)
 
     # 生成 [batch_size, 1, 1, seq_len] 的掩码
     mask = (seq != pad_idx).unsqueeze(1).unsqueeze(1)
+
     return mask
 
 

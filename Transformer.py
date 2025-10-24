@@ -33,7 +33,7 @@ class Transformer(nn.Module):
         self.output_layer = OutputLayer(d_model, tgt_vocab_size)
 
     def forward(self, src_seq, tgt_seq, src_mask, tgt_self_mask, tgt_cross_mask):
-        enc_output = self.encoder(src_seq, src_mask)  # 编码器输出
-        dec_output = self.decoder(tgt_seq, enc_output, tgt_self_mask, tgt_cross_mask)  # 解码器输出
+        enc_output = self.encoder(src_seq, src_mask)  # 编码器输出  ([batch, seq], [batch, 1, 1, seq]) -> [batch, seq, d_model]
+        dec_output = self.decoder(tgt_seq, enc_output, tgt_self_mask, tgt_cross_mask)  # 解码器输出 [batch, seq - 1, d_model]
         output = self.output_layer(dec_output)  # 映射到词汇表
         return output
