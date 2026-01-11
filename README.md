@@ -31,6 +31,7 @@ in multi-head attetion： will be used for self-attention broadcast
 `output = attention * value [batch, n_head, len, len] * [batch, n_head, len, d_k] = [batch, n_head, len, d_k]`
 
 in mask-head attention: lower triangular matrix to prevent seeing future token
+
 `triangular_mask = [1, 1, seq_len, seq_len]`
 
 ` pad_mask       = [batch, 1, 1, len] `
