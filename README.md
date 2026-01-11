@@ -20,6 +20,7 @@ MultiHeadAttention：
 `x = [batch_size, seq_len, n_heads, d_k] => linear_transform x3 => q,k,v [batch_size, seq_len, n_heads, d_k]  => attention, value * attention(as k,v input of encoder)`
 
 mask:
+
 in multi-head attetion： will be used for self-attention broadcast
 `mask = [batch, 1, 1, len] `
 
@@ -37,7 +38,11 @@ in mask-head attention: lower triangular matrix to prevent seeing future token
 `combine_masks = triangular_mask & pad_mask = [1, 1, seq_len, seq_len] & [batch, 1, 1, len] = [b, 1, len, len]`
 
 lower triangular matrix makes:
+
 训练时，限制模型获取 “不该看到的信息”
-复用训练时的掩码逻辑：推理时，对于已生成的序列（如[t1, t2, ..., ti]），生成ti+1时，掩码会屏蔽ti+1之后的位置（此时尚未生成，视为 “未来信息”），确保模型仅基于t1~ti进行预测。
+
+复用训练时的掩码逻辑：
+
+推理时，对于已生成的序列（如[t1, t2, ..., ti]），生成ti+1时，掩码会屏蔽ti+1之后的位置（此时尚未生成，视为 “未来信息”），确保模型仅基于t1~ti进行预测。
 意味着[b,1,i, len]表示训练第i+1个token时，应该掩盖的内容
 
