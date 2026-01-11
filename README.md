@@ -9,12 +9,12 @@ This project will help you get familiar with Transformer thorough the 3 steps. I
 1. shape flow chart
 <img width="572" height="736" alt="image" src="https://github.com/user-attachments/assets/577eb264-4cf4-46c7-9077-f39b4408720b" />
 word embedding:
-x = [batch, len] => [batch, len, d_model]
-position => [batch, 1, d_model]
-x + postion => [batch, len, d_model]
+`x = [batch, len] => [batch, len, d_model]`
+`position => [batch, 1, d_model]`
+`x + postion => [batch, len, d_model]`
 
 MultiHeadAttention：
-x = [batch_size, seq_len, n_heads, d_k] => linear_transform x3 => q,k,v [batch_size, seq_len, n_heads, d_k]  => attention, value * attention(as k,v input of encoder)
+`x = [batch_size, seq_len, n_heads, d_k] => linear_transform x3 => q,k,v [batch_size, seq_len, n_heads, d_k]  => attention, value * attention(as k,v input of encoder)`
 
 mask:
 in multi-head attetion： will be used for self-attention broadcast
